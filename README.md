@@ -6,7 +6,7 @@ Amiga Demos in 68000 ASM
 ![First Intro Screenshot](MrD1.png "First Intro Screenshot")
 
 ### Description
-My very fist Amiga 500 intro in 1989. Some basic coppers, waving logo and scrolltext. If you are running an emulator, disable all cache and acceleration or the intro will run too fast (lamer vertical sync).
+My very first Amiga 500 intro in 1989. Some basic coppers, waving logo and scrolltext. If you are running an emulator, disable all cache and acceleration or the intro will run too fast (lamer vertical sync).
 
 ### Launch
 - In folder "Mrd1" launch SEKA.
