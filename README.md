@@ -52,3 +52,21 @@ TGS released several compilations. This menu was done to select the programs to 
 - Assemble the code: "a" (no option)
 - Load the data binaries: "y"
 - Run the demo: "jr"
+
+## TGS Trainer
+
+![TGS Trainer Screenshot](TgsTrainer.png "TGS Trainer Screenshot")
+
+### Description
+
+TGS Trainer. This menu has been done to activate cheat codes in games. It is controllable with the Joystick. Instructions for the cracker are in the source.
+
+### Launch
+
+- In folder "TgsTrainer" launch MasterSEKA.
+- Choose memory allocation (for example Chip 100K)
+- Load the code: "r", then "trainer1.s"
+- Assemble the code: "a" (no option)
+- Load the data binaries: "y"
+- Run the demo: "jr"
+
