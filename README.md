@@ -70,3 +70,20 @@ TGS Trainer. This menu has been done to activate cheat codes in games. It is con
 - Load the data binaries: "y"
 - Run the demo: "jr"
 
+## TGS Menu 3
+
+![TGS Menu 3 Screenshot](TgsMenu3.png "TGS Menu 3 Screenshot")
+
+### Description
+
+Control is done with the Keyboard. The music is done with Future Composer 1.3 so there is the replay routine here.
+
+### Launch
+
+- In folder "TgsMenu3" launch MasterSEKA.
+- Choose memory allocation (for example Chip 100K)
+- Load the code: "r", then "menu3.s"
+- Assemble the code: "a" (no option)
+- Load the data binaries: "y"
+- Run the demo: "jr"
+
