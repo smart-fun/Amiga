@@ -35,3 +35,20 @@ The intro has 8 sprites and a very quick scroller.
 - Assemble the code: "a" (no option)
 - Load the data binaries (logo, music, font, precalc sprite positions): "y"
 - Run the demo: "jr"
+
+## TGS Menu 1
+
+![TGS Menu 1 Screenshot](TgsMenu1.png "TGS Menu 1 Screenshot")
+
+### Description
+
+TGS released several compilations. This menu was done to select the programs to start. There are some short explanations in the source to tell the mates how to use / configure the menu.
+
+### Launch
+
+- In folder "TgsMenu1" launch MasterSEKA.
+- Choose memory allocation (for example Chip 100K)
+- Load the code: "r", then "menu.s"
+- Assemble the code: "a" (no option)
+- Load the data binaries: "y"
+- Run the demo: "jr"
