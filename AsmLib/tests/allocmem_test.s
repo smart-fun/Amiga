@@ -13,6 +13,8 @@ r:
 	bsr memory_alloc
 	move.l d0, malloc2
 	
+	bsr memory_release_all
+	
 	rts
 
 init1: dc.l 0	
