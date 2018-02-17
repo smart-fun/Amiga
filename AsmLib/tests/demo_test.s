@@ -16,7 +16,7 @@ r:
 	tst.l d0
 	beq exit_movem
 	move.l #44*300*5, d0
-	move.l #ALLOC_TYPE_CHIP, d1
+	move.l #EXEC_ALLOC_TYPE_CHIP, d1
 	bsr memory_alloc
 	move.l d0, screenBuffer
 	beq exit_memory_release
@@ -39,7 +39,7 @@ r:
 .modsize_ok:
 	; Alloc for File
 	move.l modsize, d0
-	move.l #ALLOC_TYPE_CHIP, d1
+	move.l #EXEC_ALLOC_TYPE_CHIP, d1
 	bsr memory_alloc
 	move.l d0, modBuffer
 	bne .mod_alloc_ok
@@ -84,7 +84,7 @@ setBitplans:
 	bsr writeCLI
 ; alloc Chip memory for copperlist, and copy copperlist in it
 	move.l #endcopperlist-copperlist, d0
-	move.l #ALLOC_TYPE_CHIP, d1
+	move.l #EXEC_ALLOC_TYPE_CHIP, d1
 	bsr memory_alloc
 	move.l d0, copperListAddress
 	bne .copper_allocation_ok

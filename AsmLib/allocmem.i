@@ -1,6 +1,5 @@
-ALLOC_TYPE_CHIP = $10002	; + clear
-ALLOC_TYPE_FAST = $10004	; + clear
-ALLOC_TYPE_FAST_ELSE_CHIP = $10000	; + clear
+
+	include "const.i"
 
 ; ******** memory_init ********
 ; Prepare allocator for a max number of possible allocations
@@ -15,7 +14,7 @@ memory_init:
 ; ******** memory_alloc ********
 ; Allocate memory
 ; INPUT: d0 = size of the block to alloc
-;        d1 = type of memory to allocate. See ALLOC_TYPE_*
+;        d1 = type of memory to allocate. See EXEC_ALLOC_TYPE_* in "const.i"
 ; OUTPUT d0 = address of the buffer allocated (or 0 if failed)
 memory_alloc:
 	movem.l d1-d7/a0-a6,-(a7)
@@ -45,9 +44,9 @@ memory_release_all:
 memory_prepare:
 	move.l d0, max_allocs
 	lsl.l #3, d0		; 8 bytes per address (address.l and size.l)
-	move.l	#$10000,d1	; Fast, else chip
-	move.l	4.w,a6
-	jsr	-198(a6)
+	move.l	#EXEC_ALLOC_TYPE_FAST_ELSE_CHIP,d1
+	move.l	EXEC_BASE,a6
+	jsr	EXEC_AllocMem(a6)
 	tst.l d0
 	bne .memory_prepare_buffers
 	rts
@@ -71,8 +70,8 @@ alloc_buffers:
 ; *************************************************************************************************
 malloc:
 	move.l d0, malloc_temp_size
-	move.l	4.w,a6
-	jsr	-198(a6)
+	move.l	EXEC_BASE,a6
+	jsr	EXEC_AllocMem(a6)
 	tst.l d0
 	bne .malloc_success
 	rts
@@ -108,8 +107,8 @@ freemem:
 	move.l -4(a2), a1	; address
 	clr.l -4(a2)
 	clr.l (a2)
-	move.l	4.w,a6
-	jsr	-210(a6)
+	move.l	EXEC_BASE,a6
+	jsr	EXEC_FreeMem(a6)
 	rts
 
 ; *************************************************************************************************
@@ -124,8 +123,8 @@ releaseall:
 	clr.l -8(a5)
 	clr.l -4(a5)
 	movem.l d5/a5, -(a7)
-	move.l	4.w,a6
-	jsr	-210(a6)
+	move.l	EXEC_BASE,a6
+	jsr	EXEC_FreeMem(a6)
 	movem.l (a7)+, d5/a5
 .releaseall_empty:
 	dbf d5, .releaseall_loop
@@ -134,6 +133,6 @@ releaseall:
 	move.l alloc_buffers, a1
 	move.l max_allocs, d0
 	lsr.l #3, d0	; 8 bytes per address (address.l and size.l)
-	move.l	4.w,a6
-	jsr	-210(a6)
+	move.l	EXEC_BASE,a6
+	jsr	EXEC_FreeMem(a6)
 	rts

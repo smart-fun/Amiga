@@ -37,7 +37,7 @@ file_read:
 	
 	move.l d0, a6
 	move.l file_name, d1
-	move.l #1005, d2	; READ ACCESS
+	move.l #DOS_ACCESS_EXISTING, d2
 	jsr DOS_OpenFile(a6)
 	move.l d0, file
 	beq .file_close_dos
@@ -53,7 +53,7 @@ file_read:
 .file_close_dos:	
 	move.l a6, a1
 	move.l EXEC_BASE, a6
-	jsr -414(a6)	; CLOSELIB
+	jsr EXEC_CloseLib(a6)
 .file_read_exit:
 	rts
 	
@@ -72,19 +72,19 @@ file_size_get:
 
 	move.l d0, a6
 	move.l file_name, d1
-	move.l #1005, d2	; READ
+	move.l #DOS_ACCESS_EXISTING, d2
 	jsr DOS_OpenFile(a6)
 	move.l d0, file
 	beq .closedos
 
 	move.l file, d1
 	move.l  #0,d2
-    move.l  #1,d3	; END OF FILE
+    move.l  #DOS_SEEK_MODE_END,d3
     jsr     DOS_SeekFile(a6)
 
 	move.l file, d1
 	move.l  #0,d2
-    move.l  #0,d3	; CURRENT
+    move.l  #DOS_SEEK_MODE_CURRENT,d3
     jsr     DOS_SeekFile(a6)
 	
 	move.l d0,filesize
