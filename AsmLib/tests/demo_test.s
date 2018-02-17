@@ -11,6 +11,9 @@ CLOSELIB=-414			; FERMER LES BIBLIOTHEQUES
 
 r:	
 	movem.l d0-d7/a0-a6,-(a7)
+	
+	CREATE_OUTPUT_TEXT "Hello AMIGA",a0
+	bsr writeCLI
 
 ; Alloc Chip for Screen
 	move.l #20, d0
@@ -32,7 +35,7 @@ r:
 	moveq #0,d0	; revision number
 	jsr OPENLIB(a6)
 	move.l d0, gfxbase
-	beq exit_closelib
+	beq exit_permit
 
 	move.l d0, a0
 	move.l $32(a0), systemCopper
@@ -69,10 +72,9 @@ main:
 ; restore copperlist
 	move.l gfxbase,a1
 	move.l systemCopper, $32(a1)
-exit_closelib:
 	move.l EXECBASE, a6
 	jsr CLOSELIB(a6)
-	
+exit_permit:	
 	move.l EXECBASE, a6
 	jsr PERMIT(a6)
 exit_memory_release:
@@ -80,6 +82,50 @@ exit_memory_release:
 exit_movem:
 	movem.l (a7)+,d0-d7/a0-a6
 	rts
+	
+	
+writeCLI:
+	move.l a0, .writeCLItext
+	lea dosname, a1
+	moveq #0, d0
+	move.l EXECBASE, a6	; exec library
+	jsr OPENLIB(a6)
+	move.l d0, dosbase
+	beq .writeCLIexit
+	move.l d0, a6	; dos library
+	jsr -60(a6)	; get output
+	move.l d0,outputHandle
+	beq .writeCLIcloseDos
+	
+	move.l d0, d1	; file handler
+	move.l .writeCLItext, d2	; text
+	moveq.l #-1, d3	; compute size
+	move.l d2, a0
+.writeCLIsize:
+	addq.l #1,d3
+	tst.b (a0)+
+	bne .writeCLIsize
+	jsr -48(a6)	; write
+	
+.writeCLIcloseDos:
+	move.l EXECBASE, a6	; exec library
+	move.l dosbase,a1
+	jsr CLOSELIB(a6)
+.writeCLIexit:
+	rts
+.writeCLItext:
+	dc.l 0
+	
+text:
+	dc.b "Hello World",10,13,0
+	even
+dosname:
+	dc.b "dos.library",0
+	even
+dosbase:
+	dc.l 0
+outputHandle:
+	dc.l 0
 	
 	include "allocmem.i"
 	even

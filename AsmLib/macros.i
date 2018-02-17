@@ -22,3 +22,16 @@ WAIT_BLITTER	MACRO
 	bne.s .waitBlitter
 	move.l (a7)+,a5
 	ENDM
+
+; ******** CREATE_OUTPUT_TEXT ********
+; Creates a texts for Logs (with CR and final 0) and returns a pointer in an Address Register
+; example of usage: CREATE_LOG_TEXT "hello world",a0
+CREATE_OUTPUT_TEXT MACRO
+	lea .text\@, \2
+	bra .textEnd\@
+.text\@
+	dc.b \1
+	dc.b 10,13,0
+	even
+.textEnd\@
+	ENDM
