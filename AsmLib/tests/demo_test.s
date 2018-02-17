@@ -1,13 +1,8 @@
 
-EXECBASE=4			; ADRESSE DE BASE DE EXEC.LIB
-FORBID=-132			; OFFSET DE LA FONCTION ETEINDRE
-PERMIT=-138			; ET REMETTRE LE MULTITACHES
-OPENLIB=-552			; OFFSET OUVRIR ET
-CLOSELIB=-414			; FERMER LES BIBLIOTHEQUES
+	include "const.i"
+	include "macros.i"
 
 	section FAST, CODE
-	
-	include "macros.i"
 
 r:	
 	movem.l d0-d7/a0-a6,-(a7)
@@ -109,13 +104,13 @@ setBitplans:
 	
 .copperInChip
 ; Init Copper list
-	move.l EXECBASE, a6
-	jsr FORBID(a6)
+	move.l EXEC_BASE, a6
+	jsr EXEC_Forbid(a6)
 	
-	move.l EXECBASE, a6
+	move.l EXEC_BASE, a6
 	lea gfxname, a1
 	moveq #0,d0	; revision number
-	jsr OPENLIB(a6)
+	jsr EXEC_OpenLib(a6)
 	move.l d0, gfxbase
 	beq exit_permit
 	
@@ -150,11 +145,11 @@ main:
 ; restore copperlist
 	move.l gfxbase,a1
 	move.l systemCopper, $32(a1)
-	move.l EXECBASE, a6
-	jsr CLOSELIB(a6)
+	move.l EXEC_BASE, a6
+	jsr EXEC_CloseLib(a6)
 exit_permit:	
-	move.l EXECBASE, a6
-	jsr PERMIT(a6)
+	move.l EXEC_BASE, a6
+	jsr EXEC_Permit(a6)
 exit_memory_release:
 	bsr memory_release_all
 exit_movem:
@@ -166,8 +161,8 @@ writeCLI:
 	move.l a0, .writeCLItext
 	lea dosname, a1
 	moveq #0, d0
-	move.l EXECBASE, a6	; exec library
-	jsr OPENLIB(a6)
+	move.l EXEC_BASE, a6	; exec library
+	jsr EXEC_OpenLib(a6)
 	move.l d0, dosbase
 	beq .writeCLIexit
 	move.l d0, a6	; dos library
@@ -186,9 +181,9 @@ writeCLI:
 	jsr -48(a6)	; write
 	
 .writeCLIcloseDos:
-	move.l EXECBASE, a6	; exec library
+	move.l EXEC_BASE, a6	; exec library
 	move.l dosbase,a1
-	jsr CLOSELIB(a6)
+	jsr EXEC_CloseLib(a6)
 .writeCLIexit:
 	rts
 .writeCLItext:
@@ -221,7 +216,7 @@ screenBuffer:
 copperListAddress:
 	dc.l 0
 
-	section CHIP, DATA
+	section CHIP, DATA_C
 	
 copperlist:
 	DC.W $008E,$2981		; DWISTRT (H129,V41)
