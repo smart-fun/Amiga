@@ -6,6 +6,9 @@ OPENLIB=-552			; OFFSET OUVRIR ET
 CLOSELIB=-414			; FERMER LES BIBLIOTHEQUES
 
 	section FAST, CODE
+	
+	include "macros.i"
+
 r:	
 	movem.l d0-d7/a0-a6,-(a7)
 
@@ -52,7 +55,10 @@ setBitplans:
 	bsr protracker_init
 	
 main:
-	bsr waitVBL
+	WAIT_VBL 80
+	
+	move.w #$482, $dff180
+	
 	bsr protracker_play
 	
 	btst	#6,$bfe001
@@ -73,14 +79,6 @@ exit_memory_release:
 	bsr memory_release_all
 exit_movem:
 	movem.l (a7)+,d0-d7/a0-a6
-	rts
-
-waitVBL:
-	cmp.b	#200,$dff006
-	bne	waitVBL
-waitVBL2:
-	cmp.b	#200,$dff006
-	beq	waitVBL2
 	rts
 	
 	include "allocmem.i"

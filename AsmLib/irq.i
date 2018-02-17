@@ -29,12 +29,12 @@ irq_code:
 	move	$dff01e,d0
 	and		$dff01c,d0
 	btst	#5,d0
-	beq.s	irq_skip
+	beq.s	.irq_skip
 
 	; execute user code
 	lea irq_user_code, a0
 	jsr (a0)
-irq_skip:
+.irq_skip:
 	movem.l	(a7)+,d0-d7/a0-a6
 irq_system:
 	jmp $0	; jump to previous irq (system)

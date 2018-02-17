@@ -49,17 +49,17 @@ memory_prepare:
 	move.l	4.w,a6
 	jsr	-198(a6)
 	tst.l d0
-	bne memory_prepare_buffers
+	bne .memory_prepare_buffers
 	rts
-memory_prepare_buffers:
+.memory_prepare_buffers:
 	move.l d0, alloc_buffers
 	move.l d0, a0
 	move.l max_allocs, d0
 	subq #1, d0
-memory_prepare_clear:
+.memory_prepare_clear:
 	move.l #0,(a0)
 	addq.l #4, a0
-	dbf d0, memory_prepare_clear
+	dbf d0, .memory_prepare_clear
 	move.l max_allocs, d0	; returns the number of buffers that can be allocated
 	rts
 	
@@ -74,19 +74,19 @@ malloc:
 	move.l	4.w,a6
 	jsr	-198(a6)
 	tst.l d0
-	bne malloc_success
+	bne .malloc_success
 	rts
-malloc_success:
+.malloc_success:
 	move.l alloc_buffers, a0
 	move.l max_allocs, d1
 	subq #1,d1
-malloc_search:
+.malloc_search:
 	tst.l	(a0)
-	beq.b	malloc_found
+	beq.b	.malloc_found
 	addq.l	#8,a0
-	dbf d1, malloc_search
+	dbf d1, .malloc_search
 	rts	; no place in the alloc_buffers, but still returns the allocated buffer
-malloc_found:
+.malloc_found:
 	move.l d0,(a0)+
 	move.l malloc_temp_size,(a0)+
 	rts
@@ -98,12 +98,12 @@ freemem:
 	move.l alloc_buffers, a2
 	move.l max_allocs, d0
 	subq #1, d0
-freemem_search:
+.freemem_search:
 	cmp.l (a2)+, a0
-	beq freemem_found
-	dbf d0, freemem_search
+	beq .freemem_found
+	dbf d0, .freemem_search
 	rts	; alloc not found
-freemem_found:
+.freemem_found:
 	move.l (a2), d0		; size
 	move.l -4(a2), a1	; address
 	clr.l -4(a2)
@@ -117,18 +117,18 @@ releaseall:
 	move.l alloc_buffers, a5
 	move.l max_allocs, d5
 	subq #1, d5
-releaseall_loop:
+.releaseall_loop:
 	move.l (a5)+, a1	; address
 	move.l (a5)+, d0	; size
-	beq releaseall_empty
+	beq .releaseall_empty
 	clr.l -8(a5)
 	clr.l -4(a5)
 	movem.l d5/a5, -(a7)
 	move.l	4.w,a6
 	jsr	-210(a6)
 	movem.l (a7)+, d5/a5
-releaseall_empty:
-	dbf d5, releaseall_loop
+.releaseall_empty:
+	dbf d5, .releaseall_loop
 	
 	; release alloc_buffers
 	move.l alloc_buffers, a1
