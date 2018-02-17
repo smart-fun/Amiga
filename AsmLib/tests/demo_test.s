@@ -8,18 +8,17 @@ CLOSELIB=-414			; FERMER LES BIBLIOTHEQUES
 	section FAST, CODE
 	
 	include "macros.i"
-	
-	; SEEK
-	; http://eab.abime.net/showthread.php?t=65160
-	; http://amigadev.elowar.com/read/ADCD_2.1/Includes_and_Autodocs_2._guide/node006C.html
-	
 
+modname:
+	dc.b "Mod.rapido2", 0
+	even
+modsize:
+	dc.l 0
+modBuffer:
+	dc.l 0
+	
 r:	
 	movem.l d0-d7/a0-a6,-(a7)
-	
-	;lea filename,a0
-	;bsr file_size
-	;move.l d0, result
 	
 	CREATE_OUTPUT_TEXT "Hello AMIGA",a0
 	bsr writeCLI
@@ -34,6 +33,29 @@ r:
 	bsr memory_alloc
 	move.l d0, screenBuffer
 	beq exit_memory_release
+	
+	
+	; TESTS FILES
+	
+	; get File Size
+	lea modname,a0
+	bsr file_size
+	move.l d0, modsize
+
+	; Alloc for File
+	move.l modsize, d0
+	move.l #ALLOC_TYPE_CHIP, d1
+	bsr memory_alloc
+	move.l d0, modBuffer
+	beq skip_mod_file
+	
+	; Read File
+	move.l modsize, d0
+	lea modname,a0
+	move.l modBuffer, a1
+	bsr read_file
+	
+skip_mod_file:
 	
 ; set bitplan addresses
 	move.l screenBuffer, d0
@@ -85,21 +107,29 @@ setBitplans:
 	move.l copperListAddress,$32(a0)
 
 ; init protracker
-	lea module,a0
+	;lea module,a0
+	move.l modBuffer, a0
+	beq .noMusicInit
 	bsr protracker_init
-	
+.noMusicInit:
+
 main:
 	WAIT_VBL 80
 	
 	move.w #$482, $dff180
-	
+
+	tst.l modBuffer
+	beq .noMusicPlay
 	bsr protracker_play
-	
+.noMusicPlay:
 	btst	#6,$bfe001
 	bne.b	main
 	
+	tst.l modBuffer
+	beq .noMusicRelease
 	bsr protracker_release
-	
+.noMusicRelease:
+
 ; restore copperlist
 	move.l gfxbase,a1
 	move.l systemCopper, $32(a1)
@@ -252,11 +282,6 @@ copperbitplans:
 	dc.w 0 ; just here for .L copy
 endcopperlist:
 
-module:
-	incbin "mod.melodee"
+;module:
+;	incbin "mod.melodee"
 	
-;filename:
-	;dc.b "Mod.rapido2", 0
-	;even
-;result:
-	;dc.l 0
