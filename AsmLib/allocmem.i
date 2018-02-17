@@ -1,6 +1,6 @@
-ALLOC_TYPE_CHIP = $10002
-ALLOC_TYPE_FAST = $10004
-ALLOC_TYPE_FAST_ELSE_CHIP = $10000
+ALLOC_TYPE_CHIP = $10002	; + clear
+ALLOC_TYPE_FAST = $10004	; + clear
+ALLOC_TYPE_FAST_ELSE_CHIP = $10000	; + clear
 
 ; ******** memory_init ********
 ; Prepare allocator for a max number of possible allocations
