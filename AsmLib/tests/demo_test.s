@@ -15,7 +15,7 @@ r:
 	CREATE_OUTPUT_TEXT "Hello AMIGA",a0
 	bsr writeCLI
 
-; Alloc Chip for Screen
+; Alloc Chip memory for Screen
 	move.l #20, d0
 	bsr memory_init
 	tst.l d0
@@ -25,21 +25,7 @@ r:
 	bsr memory_alloc
 	move.l d0, screenBuffer
 	beq exit_memory_release
-
-; Init Copper list
-	move.l EXECBASE, a6
-	jsr FORBID(a6)
 	
-	move.l EXECBASE, a6
-	lea gfxname, a1
-	moveq #0,d0	; revision number
-	jsr OPENLIB(a6)
-	move.l d0, gfxbase
-	beq exit_permit
-
-	move.l d0, a0
-	move.l $32(a0), systemCopper
-	move.l #copperlist,$32(a0)
 ; set bitplan addresses
 	move.l screenBuffer, d0
 	lea copperbitplans, a1
@@ -52,7 +38,43 @@ setBitplans:
 	add.l #8, a1
 	add.l #44, d0
 	dbf d1, setBitplans
+
+; check if copperlist is loaded in chip ram
+	move.l #copperlist, d0
+	move.l d0, copperListAddress
+	cmp.l #$20000, d0
+	blo .copperInChip
+
+; alloc Chip memory for copperlist, and copy copperlist in it
+	move.l #endcopperlist-copperlist, d0
+	move.l #ALLOC_TYPE_CHIP, d1
+	bsr memory_alloc
+	move.l d0, copperListAddress
+	beq exit_memory_release
+	move.l #endcopperlist-copperlist, d0
+	lsr.l #2, d0	; /4 because copy longs
+	lea copperlist, a0
+	move.l copperListAddress, a1
+.copyCopper:
+	move.l (a0)+,(a1)+
+	dbf d0,.copyCopper
 	
+.copperInChip
+; Init Copper list
+	move.l EXECBASE, a6
+	jsr FORBID(a6)
+	
+	move.l EXECBASE, a6
+	lea gfxname, a1
+	moveq #0,d0	; revision number
+	jsr OPENLIB(a6)
+	move.l d0, gfxbase
+	beq exit_permit
+	
+	move.l gfxbase, a0
+	move.l $32(a0), systemCopper
+	move.l copperListAddress,$32(a0)
+
 ; init protracker
 	lea module,a0
 	bsr protracker_init
@@ -141,7 +163,9 @@ systemCopper:
 	dc.l 0
 screenBuffer:
 	dc.l 0
-	
+copperListAddress:
+	dc.l 0
+
 	section CHIP, DATA
 	
 copperlist:
@@ -217,6 +241,8 @@ copperbitplans:
 	DC.W $420F,$FFFE,$180,$A80
 	DC.W $430F,$FFFE,$180,$B90
 	dc.l	-2
+	dc.w 0 ; just here for .L copy
+endcopperlist:
 
 module:
 	incbin "mod.melodee"

@@ -33,7 +33,7 @@ memory_free:
 	movem.l (a7)+,d0-d7/a0-a6
 	rts
 	
-; ******** memory_free ********
+; ******** memory_release_all ********
 ; free all allocated memory and release allocator
 memory_release_all:
 	movem.l d0-d7/a0-a6,-(a7)
