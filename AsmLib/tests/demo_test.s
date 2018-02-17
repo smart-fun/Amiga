@@ -9,14 +9,6 @@ CLOSELIB=-414			; FERMER LES BIBLIOTHEQUES
 	
 	include "macros.i"
 
-modname:
-	dc.b "Mod.rapido2", 0
-	even
-modsize:
-	dc.l 0
-modBuffer:
-	dc.l 0
-	
 r:	
 	movem.l d0-d7/a0-a6,-(a7)
 	
@@ -34,6 +26,8 @@ r:
 	move.l d0, screenBuffer
 	beq exit_memory_release
 	
+	CREATE_OUTPUT_TEXT "Memory Allocated for Frame Buffer",a0
+	bsr writeCLI
 	
 	; TESTS FILES
 	
@@ -41,14 +35,25 @@ r:
 	lea modname,a0
 	bsr file_size
 	move.l d0, modsize
-
+	bne .modsize_ok
+	
+	CREATE_OUTPUT_TEXT "Cannot open mod.demo",a0
+	bsr writeCLI
+	bra skip_mod_file
+	
+.modsize_ok:
 	; Alloc for File
 	move.l modsize, d0
 	move.l #ALLOC_TYPE_CHIP, d1
 	bsr memory_alloc
 	move.l d0, modBuffer
-	beq skip_mod_file
+	bne .mod_alloc_ok
+
+	CREATE_OUTPUT_TEXT "Cannot allocate Chip Memory for module",a0
+	bsr writeCLI
+	bra skip_mod_file
 	
+.mod_alloc_ok
 	; Read File
 	move.l modsize, d0
 	lea modname,a0
@@ -74,14 +79,26 @@ setBitplans:
 	move.l #copperlist, d0
 	move.l d0, copperListAddress
 	cmp.l #$20000, d0
-	blo .copperInChip
+	bhs .copper_in_fast
+	
+	CREATE_OUTPUT_TEXT "Copperlist in Chip Memory, OK",a0
+	bra .copperInChip
 
+.copper_in_fast:
+	CREATE_OUTPUT_TEXT "Copperlist in Fast Memory, allocate Chip...",a0
+	bsr writeCLI
 ; alloc Chip memory for copperlist, and copy copperlist in it
 	move.l #endcopperlist-copperlist, d0
 	move.l #ALLOC_TYPE_CHIP, d1
 	bsr memory_alloc
 	move.l d0, copperListAddress
-	beq exit_memory_release
+	bne .copper_allocation_ok
+	
+	CREATE_OUTPUT_TEXT "Cannot allocate Chip Memory for copperlist",a0
+	bsr writeCLI
+	bra exit_memory_release
+	
+.copper_allocation_ok
 	move.l #endcopperlist-copperlist, d0
 	lsr.l #2, d0	; /4 because copy longs
 	lea copperlist, a0
@@ -282,6 +299,11 @@ copperbitplans:
 	dc.w 0 ; just here for .L copy
 endcopperlist:
 
-;module:
-;	incbin "mod.melodee"
+modname:
+	dc.b "mod.demo", 0
+	even
+modsize:
+	dc.l 0
+modBuffer:
+	dc.l 0
 	
