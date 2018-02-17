@@ -8,9 +8,18 @@ CLOSELIB=-414			; FERMER LES BIBLIOTHEQUES
 	section FAST, CODE
 	
 	include "macros.i"
+	
+	; SEEK
+	; http://eab.abime.net/showthread.php?t=65160
+	; http://amigadev.elowar.com/read/ADCD_2.1/Includes_and_Autodocs_2._guide/node006C.html
+	
 
 r:	
 	movem.l d0-d7/a0-a6,-(a7)
+	
+	;lea filename,a0
+	;bsr file_size
+	;move.l d0, result
 	
 	CREATE_OUTPUT_TEXT "Hello AMIGA",a0
 	bsr writeCLI
@@ -150,9 +159,8 @@ outputHandle:
 	dc.l 0
 	
 	include "allocmem.i"
-	even
 	include "protracker.i"
-	even
+	include "file.i"
 	
 gfxname:
 	dc.b "graphics.library",0
@@ -247,3 +255,8 @@ endcopperlist:
 module:
 	incbin "mod.melodee"
 	
+;filename:
+	;dc.b "Mod.rapido2", 0
+	;even
+;result:
+	;dc.l 0
