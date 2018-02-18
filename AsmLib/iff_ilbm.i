@@ -1,9 +1,57 @@
-; ******** iff_uncompress ********
+; See http://wiki.amigaos.net/wiki/ILBM_IFF_Interleaved_Bitmap
+
+; ******** IFF_GetSize ********
+; Retrieves Width, Height and the number of bitplans of a IFF Picture
+; INPUT:	a0 = IFF buffer
+; OUTPUT:	d0 = width or 0 if error
+;			d1 = height, or 0 if error
+;			d2 = bitplans, or 0 if error
+IFF_GetSize:
+	movem.l d3-d7/a0-a6,-(a7)
+	bsr iff_getBMHDInfo
+	movem.l (a7)+,d3-d7/a0-a6
+	rts
+
+
+; ******** IFF_GetPicture ********
 ; Uncompress a IFF ILBM picture to a pre-allocated buffer
-; INPUT: a0 = IFF ILBM source, a1 = destination buffer
-; OUTPUT: d0 = error code (0 = success, 1 = invalid format)
+; INPUT:	a0 = IFF ILBM source
+;			a1 = destination buffer
+; OUTPUT:	d0 = error code (0 = success, 1 = invalid format)
+IFF_GetPicture:
+	movem.l d1-d7/a0-a6,-(a7)
+	bsr iff_uncompress
+	movem.l (a7)+,d1-d7/a0-a6
+	rts
+
+; *************************************************************************************************
+iff_getBMHDInfo:
+	moveq #0, d0
+	moveq #0, d1
+	moveq #0, d2
+	cmp.l #"FORM",(a0)+
+	bne .bmhd_end
+	move.l (a0)+,d7		; remaining size
+	add.l a0,d7			; d0 = end of file
+	cmp.l #"ILBM",(a0)+
+	bne .bmhd_end
+.bmhd_next_chunk:
+	cmp.l #"BMHD",(a0)+
+	beq .bmhd_chunk
+	add.l (a0)+,a0	; skip this chunk (BODY, CMAP...)
+	cmp.l d7, a0
+	blo .bmhd_next_chunk
+	bra .bmhd_end	; no BMHD chunk!
+.bmhd_chunk:
+	addq #4, a0	; chunck size
+	move.w (a0),d0
+	move.w 2(a0),d1
+	move.b 8(a0),d2
+.bmhd_end
+	rts
+	
+; *************************************************************************************************
 iff_uncompress:
-	movem.l d1-d2/a0-a1,-(a7)
 	cmp.l #"FORM",(a0)+
 	bne .iff_failure
 	move.l (a0)+,d0		; remaining size
@@ -45,9 +93,6 @@ iff_uncompress:
 .iff_failure:
 	moveq.l #1, d0
 .iff_exit:
-	movem.l (a7)+,d1-d2/a0-a1
 	rts
 ; ******** end iff_uncompress ********
 
-; BMHD, 4 bytes chunk size, 2 words width / height, 2 words x/y, 1 byte nb bitplans
-; getchunk method ?

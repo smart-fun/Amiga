@@ -24,8 +24,6 @@ r:
 	CREATE_OUTPUT_TEXT "Memory Allocated for Frame Buffer",a0
 	bsr writeCLI
 	
-	; TESTS FILES
-	
 	; get File Size
 	lea modname,a0
 	bsr file_size
@@ -117,10 +115,12 @@ setBitplans:
 	move.l gfxbase, a0
 	move.l $32(a0), systemCopper
 	move.l copperListAddress,$32(a0)
+	
+	bsr loadTurrican
 
 ; init protracker
-	;lea module,a0
 	move.l modBuffer, a0
+	tst.l (a0)
 	beq .noMusicInit
 	bsr protracker_init
 .noMusicInit:
@@ -155,8 +155,44 @@ exit_memory_release:
 exit_movem:
 	movem.l (a7)+,d0-d7/a0-a6
 	rts
+
+loadTurrican:
+	lea turricanName, a0
+	bsr file_size
+	move.l d0, turricanIFFSize
+	beq .endTurrican
 	
+	move.l turricanIFFSize,d0
+	move.l #EXEC_ALLOC_TYPE_ANY, d1
+	bsr memory_alloc
+	move.l d0, turricanIFFBuffer
+	beq .endTurrican
+
+	lea turricanName,a0
+	move.l turricanIFFBuffer,a1
+	move.l turricanIFFSize,d0
+	bsr read_file
 	
+	move.l turricanIFFBuffer,a0
+	bsr IFF_GetSize
+	move.w d0, turricanWidth
+	beq .noTurricanIFF
+	move.w d1, turricanHeight
+	move.w d2, turricanBpls
+	lsr.l #3, d0
+	mulu d1, d0
+	mulu d2, d0	; size of bitmap
+	
+	; TODO allocate for uncompressed bitmap
+	
+.noTurricanIFF
+	move.l turricanIFFBuffer, a0
+	bsr memory_free
+.endTurrican:
+	rts
+
+	
+; TODO: move in dos.i
 writeCLI:
 	move.l a0, .writeCLItext
 	lea dosname, a1
@@ -203,6 +239,7 @@ outputHandle:
 	include "allocmem.i"
 	include "protracker.i"
 	include "file.i"
+	include "iff_ilbm.i"
 	
 gfxname:
 	dc.b "graphics.library",0
@@ -302,3 +339,17 @@ modsize:
 modBuffer:
 	dc.l 0
 	
+turricanName:
+	dc.b "Turrican2.IFF",0
+	even
+turricanIFFSize:
+	dc.l 0
+turricanIFFBuffer:
+	dc.l 0
+turricanWidth:
+	dc.w 0
+turricanHeight:
+	dc.w 0
+turricanBpls
+	dc.w 0
+

@@ -9,9 +9,9 @@
 		EXEC_CloseLib=-414		; Close Library(a1=base)
 		EXEC_AllocMem=-198		; Allocate Memory(d0=size,d1=type -> d0=buffer)
 		EXEC_FreeMem=-210		; Free Memory(a1=buffer,d0=size)
-		EXEC_ALLOC_TYPE_CHIP=$10002				; Chip + Clear Type
-		EXEC_ALLOC_TYPE_FAST=$10004				; Fast + Clear Type
-		EXEC_ALLOC_TYPE_FAST_ELSE_CHIP=$10000	; (Fast + clear) or (Chip + Clear)
+		EXEC_ALLOC_TYPE_CHIP=$10002		; Chip + Clear Type
+		EXEC_ALLOC_TYPE_FAST=$10004		; Fast + Clear Type
+		EXEC_ALLOC_TYPE_ANY=$10000		; Priority Fast, else Chip (+ Clear)
 		
 		DOS_OpenFile=-30		; Open a file(d1=name,d2=mode -> d0=file)
 		DOS_CloseFile=-36		; Close a file(d1=file)
