@@ -44,7 +44,7 @@ memory_release_all:
 memory_prepare:
 	move.l d0, max_allocs
 	lsl.l #3, d0		; 8 bytes per address (address.l and size.l)
-	move.l	#EXEC_ALLOC_TYPE_FAST_ELSE_CHIP,d1
+	move.l	#EXEC_ALLOC_TYPE_ANY,d1
 	move.l	EXEC_BASE,a6
 	jsr	EXEC_AllocMem(a6)
 	tst.l d0
@@ -56,8 +56,8 @@ memory_prepare:
 	move.l max_allocs, d0
 	subq #1, d0
 .memory_prepare_clear:
-	move.l #0,(a0)
-	addq.l #4, a0
+	clr.l (a0)+
+	clr.l (a0)+
 	dbf d0, .memory_prepare_clear
 	move.l max_allocs, d0	; returns the number of buffers that can be allocated
 	rts
@@ -81,7 +81,7 @@ malloc:
 	subq #1,d1
 .malloc_search:
 	tst.l	(a0)
-	beq.b	.malloc_found
+	beq	.malloc_found
 	addq.l	#8,a0
 	dbf d1, .malloc_search
 	rts	; no place in the alloc_buffers, but still returns the allocated buffer
@@ -98,19 +98,20 @@ freemem:
 	move.l max_allocs, d0
 	subq #1, d0
 .freemem_search:
-	cmp.l (a2)+, a0
+	cmp.l (a2), a0
 	beq .freemem_found
+	addq.l #8,a2
 	dbf d0, .freemem_search
 	rts	; alloc not found
 .freemem_found:
-	move.l (a2), d0		; size
-	move.l -4(a2), a1	; address
-	clr.l -4(a2)
-	clr.l (a2)
+	move.l (a2), a1		; address
+	move.l 4(a2), d0	; size
+	clr.l (a2)+
+	clr.l (a2)+
 	move.l	EXEC_BASE,a6
 	jsr	EXEC_FreeMem(a6)
 	rts
-
+	
 ; *************************************************************************************************
 releaseall:
 	move.l alloc_buffers, a5
@@ -119,6 +120,7 @@ releaseall:
 .releaseall_loop:
 	move.l (a5)+, a1	; address
 	move.l (a5)+, d0	; size
+	tst.l d0
 	beq .releaseall_empty
 	clr.l -8(a5)
 	clr.l -4(a5)
@@ -132,7 +134,7 @@ releaseall:
 	; release alloc_buffers
 	move.l alloc_buffers, a1
 	move.l max_allocs, d0
-	lsr.l #3, d0	; 8 bytes per address (address.l and size.l)
+	lsl.l #3, d0	; 8 bytes per address (address.l and size.l)
 	move.l	EXEC_BASE,a6
 	jsr	EXEC_FreeMem(a6)
 	rts
