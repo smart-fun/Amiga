@@ -182,8 +182,42 @@ loadTurrican:
 	lsr.l #3, d0
 	mulu d1, d0
 	mulu d2, d0	; size of bitmap
+	move.l d0, turricanBitmapSize
 	
-	; TODO allocate for uncompressed bitmap
+	move.l turricanBitmapSize, d0
+	move.l #EXEC_ALLOC_TYPE_CHIP, d1
+	bsr memory_alloc
+	move.l d0, turricanBitmapBuffer
+	beq .noTurricanBuffer
+
+	move.l turricanIFFBuffer,a0
+	move.l turricanBitmapBuffer,a1
+	bsr IFF_GetPicture
+
+; TODO: several bitplans
+	move.l turricanBitmapBuffer,a0
+	move.l screenBuffer,a1
+	
+	move.l #44*8, d1
+	sub.w turricanWidth, d1	; modulo
+	lsr.l #3,d1	; bytes
+	
+	moveq #0,d0
+	move.w turricanHeight, d0
+	subq#1, d0
+.loopY:
+	moveq #0,d2
+	move.w turricanWidth, d2
+	lsr.l #3,d2	; copy bytes
+	subq #1,d2
+.loopX:
+	move.b (a0)+,(a1)+
+	dbf d2,.loopX
+	add.l d1, a1	; add modulo
+	add.l #40*4, a0	; skip other bitplans
+	dbf d0, .loopY
+	
+.noTurricanBuffer:
 	
 .noTurricanIFF
 	move.l turricanIFFBuffer, a0
@@ -278,7 +312,7 @@ copperbitplans:
 	DC.W $0134,0,$0136,0	; PS5 !!!
 	DC.W $0138,0,$013A,0	; PS6 !
 	DC.W $013C,0,$013E,0	; PS7 (8 SPRITES !)
-	DC.W $0180,$0000		; REGISTRES COULEURS
+	DC.W $0180,$000F		; REGISTRES COULEURS
 	DC.W $0182,$0DFD
 	DC.W $0184,$0BFC
 	DC.W $0186,$08F8
@@ -312,7 +346,7 @@ copperbitplans:
 	DC.W $01BC,$0F00
 	DC.W $01BE,$0800
 
-	DC.W $1B0F,$FFFE,$180,$000
+	DC.W $1B0F,$FFFE,$180,$00F
 	DC.W $360F,$FFFE,$180,$055
 	DC.W $370F,$FFFE,$180,$377
 	DC.W $380F,$FFFE,$180,$588
@@ -352,4 +386,7 @@ turricanHeight:
 	dc.w 0
 turricanBpls
 	dc.w 0
-
+turricanBitmapSize:
+	dc.l 0
+turricanBitmapBuffer:	
+	dc.l 0

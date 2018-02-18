@@ -14,11 +14,11 @@ r:
 	bsr memory_alloc
 	move.l d0, malloc2
 	
-	;move.l malloc2, a0
-	;bsr memory_free
+	move.l malloc2, a0
+	bsr memory_free
 
-	;move.l malloc1, a0
-	;bsr memory_free
+	move.l malloc1, a0
+	bsr memory_free
 	
 	bsr memory_release_all
 	
