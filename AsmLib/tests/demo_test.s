@@ -242,21 +242,18 @@ doPalette:
 	addq.l #4, a1
 	dbf d0, doPalette
 	
-	
-
 	; Use Blitter to copy IFF to screen
 
-	;WAIT_BLITTER
-	;lea $dff000, a5
-	;move.w #$900,$40(a5)					; BLTCON0 http://amiga-dev.wikidot.com/information:hardware
-	;move.w #0,$42(a5)
-	;move.w #0,$64(a5)						; MODULO A
-	;move.w #4,$66(a5)					; MODULO D
-	;move.l turricanBitmapBuffer, $50(a5)	; Source A
-	;move.l #-1,$44(a5)						; Mask A
-	;move.l screenBuffer, $54(a5)			; Destination D
-	;move.l #(200*5*64)+(320/16),$58(a5)		; BLTSIZE + GO !!
-	
+	WAIT_BLITTER
+	lea $dff000, a5
+	move.w #$09F0,$40(a5)					; BLTCON0 http://amiga-dev.wikidot.com/information:hardware
+	move.w #0,$42(a5)
+	move.w #0,$64(a5)						; MODULO A
+	move.w #4,$66(a5)						; MODULO D
+	move.l turricanBitmapBuffer, $50(a5)	; Source A
+	move.l #-1,$44(a5)						; Mask A
+	move.l screenBuffer, $54(a5)			; Destination D
+	move.w #(200*5*64)+(320/16),$58(a5)		; BLTSIZE + GO !!
 
 	;move.l screenBuffer, a0
 	;move.l #(44*5)-1,d0
@@ -264,24 +261,24 @@ doPalette:
 ;	move.b #$ff,(a0)+
 ;	dbf d0,.paint
 	
-	move.l turricanBitmapBuffer,a0
-	move.l screenBuffer,a1
+	;move.l turricanBitmapBuffer,a0
+	;move.l screenBuffer,a1
 	
-	move.l #256*5, d1
-	subq#1, d1
-.loopY:
-	move.l (a0)+,(a1)+
-	move.l (a0)+,(a1)+
-	move.l (a0)+,(a1)+
-	move.l (a0)+,(a1)+
-	move.l (a0)+,(a1)+
-	move.l (a0)+,(a1)+
-	move.l (a0)+,(a1)+
-	move.l (a0)+,(a1)+
-	move.l (a0)+,(a1)+
-	move.l (a0)+,(a1)+
-	addq.l #4,a1
-	dbf d1, .loopY
+	;move.l #256*5, d1
+	;subq#1, d1
+;.loopY:
+	;move.l (a0)+,(a1)+
+	;move.l (a0)+,(a1)+
+	;move.l (a0)+,(a1)+
+	;move.l (a0)+,(a1)+
+	;move.l (a0)+,(a1)+
+	;move.l (a0)+,(a1)+
+	;move.l (a0)+,(a1)+
+	;move.l (a0)+,(a1)+
+	;move.l (a0)+,(a1)+
+	;move.l (a0)+,(a1)+
+	;addq.l #4,a1
+	;dbf d1, .loopY
 	
 	move.l turricanIFFBuffer, a0
 	bsr memory_free
