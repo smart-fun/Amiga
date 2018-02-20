@@ -23,6 +23,38 @@ IFF_GetPicture:
 	bsr iff_uncompress
 	movem.l (a7)+,d1-d7/a0-a6
 	rts
+	
+; ******** IFF_GetPalette ********
+; Finds the Palette in R,G,B format in the IFF buffer
+; INPUT:	a0 = IFF ILBM source
+; OUTPUT:	d0 = Palette pointer, or 0 if not found
+IFF_GetPalette:
+	movem.l d1-d7/a0-a6,-(a7)
+	bsr iff_get_palette
+	movem.l (a7)+,d1-d7/a0-a6
+	rts
+
+; *************************************************************************************************
+iff_get_palette:
+	moveq #0, d0
+	cmp.l #"FORM",(a0)+
+	bne .palette_end
+	move.l (a0)+,d7		; remaining size
+	add.l a0,d7			; d0 = end of file
+	cmp.l #"ILBM",(a0)+
+	bne .palette_end
+.palette_next_chunk:
+	cmp.l #"CMAP",(a0)+
+	beq .palette_chunk
+	add.l (a0)+,a0	; skip this chunk (BODY, CMAP...)
+	cmp.l d7, a0
+	blo .palette_next_chunk
+	bra .palette_end	; no BMHD chunk!
+.palette_chunk:
+	addq #4, a0	; chunck size
+	move.l a0, d0
+.palette_end
+	rts
 
 ; *************************************************************************************************
 iff_getBMHDInfo:

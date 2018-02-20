@@ -67,6 +67,8 @@ setBitplans:
 	add.l #8, a1
 	add.l #44, d0
 	dbf d1, setBitplans
+	
+	bsr loadTurrican
 
 ; check if copperlist is loaded in chip ram
 	move.l #copperlist, d0
@@ -116,7 +118,6 @@ setBitplans:
 	move.l $32(a0), systemCopper
 	move.l copperListAddress,$32(a0)
 	
-	bsr loadTurrican
 
 ; init protracker
 	move.l modBuffer, a0
@@ -160,14 +161,17 @@ loadTurrican:
 	lea turricanName, a0
 	bsr file_size
 	move.l d0, turricanIFFSize
-	beq .endTurrican
+	bne .turriSizeOk
+	rts
 	
+.turriSizeOk:	
 	move.l turricanIFFSize,d0
 	move.l #EXEC_ALLOC_TYPE_ANY, d1
 	bsr memory_alloc
 	move.l d0, turricanIFFBuffer
-	beq .endTurrican
-
+	bne .turriAllocOk
+	rts
+.turriAllocOk:
 	lea turricanName,a0
 	move.l turricanIFFBuffer,a1
 	move.l turricanIFFSize,d0
@@ -176,7 +180,9 @@ loadTurrican:
 	move.l turricanIFFBuffer,a0
 	bsr IFF_GetSize
 	move.w d0, turricanWidth
-	beq .noTurricanIFF
+	bne .yesTurricanIFF
+	
+.yesTurricanIFF:
 	move.w d1, turricanHeight
 	move.w d2, turricanBpls
 	lsr.l #3, d0
@@ -188,41 +194,97 @@ loadTurrican:
 	move.l #EXEC_ALLOC_TYPE_CHIP, d1
 	bsr memory_alloc
 	move.l d0, turricanBitmapBuffer
-	beq .noTurricanBuffer
+	bne .yesTurriAlloc2
+	
+	move.l turricanIFFBuffer, a0
+	bsr memory_free
+	rts
+
+.yesTurriAlloc2:
 
 	move.l turricanIFFBuffer,a0
 	move.l turricanBitmapBuffer,a1
 	bsr IFF_GetPicture
+	tst.l d0
+	beq .yesTuriPicture
 
-; TODO: several bitplans
+	move.l turricanIFFBuffer, a0
+	bsr memory_free
+	rts
+
+.yesTuriPicture:	
+	move.l turricanIFFBuffer, a0
+	bsr IFF_GetPalette
+	move.l d0, turricanPalette
+	bne .yesPalette
+	
+	move.l turricanIFFBuffer, a0
+	bsr memory_free
+	rts
+	
+.yesPalette:
+	; Set colors
+	move.l turricanPalette, a0
+	lea coppercolors, a1
+	moveq #32-1, d0
+doPalette:
+	moveq.l #0,d1
+	moveq.l #0,d2
+	move.b (a0)+,d1
+	lsl.w #4, d1
+	move.b (a0)+,d2
+	or d2, d1
+	move.b (a0)+, d2
+	lsr.b #4,d2
+	or d2, d1	; d1 holds color in 0x0RGB format
+	
+	move.w d1,2(a1)
+	addq.l #4, a1
+	dbf d0, doPalette
+	
+	
+
+	; Use Blitter to copy IFF to screen
+
+	;WAIT_BLITTER
+	;lea $dff000, a5
+	;move.w #$900,$40(a5)					; BLTCON0 http://amiga-dev.wikidot.com/information:hardware
+	;move.w #0,$42(a5)
+	;move.w #0,$64(a5)						; MODULO A
+	;move.w #4,$66(a5)					; MODULO D
+	;move.l turricanBitmapBuffer, $50(a5)	; Source A
+	;move.l #-1,$44(a5)						; Mask A
+	;move.l screenBuffer, $54(a5)			; Destination D
+	;move.l #(200*5*64)+(320/16),$58(a5)		; BLTSIZE + GO !!
+	
+
+	;move.l screenBuffer, a0
+	;move.l #(44*5)-1,d0
+;.paint:
+;	move.b #$ff,(a0)+
+;	dbf d0,.paint
+	
 	move.l turricanBitmapBuffer,a0
 	move.l screenBuffer,a1
 	
-	move.l #44*8, d1
-	sub.w turricanWidth, d1	; modulo
-	lsr.l #3,d1	; bytes
-	
-	moveq #0,d0
-	move.w turricanHeight, d0
-	subq#1, d0
+	move.l #256*5, d1
+	subq#1, d1
 .loopY:
-	moveq #0,d2
-	move.w turricanWidth, d2
-	lsr.l #3,d2	; copy bytes
-	subq #1,d2
-.loopX:
-	move.b (a0)+,(a1)+
-	dbf d2,.loopX
-	add.l d1, a1	; add modulo
-	add.l #40*4, a0	; skip other bitplans
-	dbf d0, .loopY
+	move.l (a0)+,(a1)+
+	move.l (a0)+,(a1)+
+	move.l (a0)+,(a1)+
+	move.l (a0)+,(a1)+
+	move.l (a0)+,(a1)+
+	move.l (a0)+,(a1)+
+	move.l (a0)+,(a1)+
+	move.l (a0)+,(a1)+
+	move.l (a0)+,(a1)+
+	move.l (a0)+,(a1)+
+	addq.l #4,a1
+	dbf d1, .loopY
 	
-.noTurricanBuffer:
-	
-.noTurricanIFF
 	move.l turricanIFFBuffer, a0
 	bsr memory_free
-.endTurrican:
 	rts
 
 	
@@ -300,9 +362,9 @@ copperbitplans:
 	DC.W $00E8,0, $00EA,0		; POINTEUR BITPLAN 3
 	DC.W $00EC,0, $00EE,0		; POINTEUR BITPLAN 4
 	DC.W $00F0,0, $00F2,0		; POINTEUR BITPLAN 5
-	DC.W $0100,$5200		; BLTCON 0
-	DC.W $0108,$0004
-	DC.W $010A,$0004
+	DC.W $0100,$5000		; BLTCON 0 // 5200
+	DC.W $0108,$00B4		; MODULO ODD
+	DC.W $010A,$00B4		; MODULO EVEN
 	DC.W $0102,$0000
 	DC.W $0120,0,$0122,0	; POINTEUR (SPRITE 0)
 	DC.W $0124,0,$0126,0	; POINTEUR (SPRITE 1)
@@ -312,6 +374,7 @@ copperbitplans:
 	DC.W $0134,0,$0136,0	; PS5 !!!
 	DC.W $0138,0,$013A,0	; PS6 !
 	DC.W $013C,0,$013E,0	; PS7 (8 SPRITES !)
+coppercolors:
 	DC.W $0180,$000F		; REGISTRES COULEURS
 	DC.W $0182,$0DFD
 	DC.W $0184,$0BFC
@@ -328,7 +391,6 @@ copperbitplans:
 	DC.W $019A,$0777
 	DC.W $019C,$0888
 	DC.W $019E,$0999
-
 	DC.W $01A0,$0000
 	DC.W $01A2,$0FFF
 	DC.W $01A4,$0F00
@@ -374,6 +436,7 @@ modBuffer:
 	dc.l 0
 	
 turricanName:
+;	dc.b "Image.IFF",0
 	dc.b "Turrican2.IFF",0
 	even
 turricanIFFSize:
@@ -389,4 +452,6 @@ turricanBpls
 turricanBitmapSize:
 	dc.l 0
 turricanBitmapBuffer:	
+	dc.l 0
+turricanPalette:
 	dc.l 0
