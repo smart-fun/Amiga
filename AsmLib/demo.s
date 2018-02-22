@@ -127,7 +127,8 @@ setBitplans:
 .noMusicInit:
 
 main:
-	WAIT_VBL 80
+	WAIT_VBL 200
+	bsr moveTube
 	
 	tst.l modBuffer
 	beq .noMusicPlay
@@ -284,6 +285,24 @@ doPalette:
 	bsr memory_free
 	rts
 
+moveTube:
+	move.l #copperTube-copperlist, d0
+	add.l copperListAddress, d0	; start of Tube
+	move.l d0, d1
+	add.l #copperTube-copperlist, d1	; end of the Tube
+	move.l d0, a0
+	moveq.l #0, d2
+	move.w (a0), d2
+	cmp.l #$EA0F,d2
+	blo .tubeLoop
+	move.w #$1A0F,d2
+.tubeLoop:
+	add.w #$0100, d2
+	move.w d2,(a0)
+	addq.l #8, a0
+	cmp.l d1,a0
+	blo .tubeLoop
+	rts
 	
 ; TODO: move in dos.i
 writeCLI:
@@ -404,7 +423,7 @@ coppercolors:
 	DC.W $01BA,$0FFF
 	DC.W $01BC,$0F00
 	DC.W $01BE,$0800
-
+copperTube:
 	DC.W $1B0F,$FFFE,$180,$055
 	DC.W $1C0F,$FFFE,$180,$377
 	DC.W $1D0F,$FFFE,$180,$588
@@ -417,6 +436,7 @@ coppercolors:
 	DC.W $240F,$FFFE,$180,$377
 	DC.W $250F,$FFFE,$180,$055
 	DC.W $260F,$FFFE,$180,$000
+endCopperTube:
 	dc.l	-2
 	dc.w 0 ; just here for .L copy
 endcopperlist:
