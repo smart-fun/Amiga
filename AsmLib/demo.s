@@ -129,8 +129,6 @@ setBitplans:
 main:
 	WAIT_VBL 80
 	
-	move.w #$482, $dff180
-
 	tst.l modBuffer
 	beq .noMusicPlay
 	bsr protracker_play
@@ -252,8 +250,10 @@ doPalette:
 	move.w #4,$66(a5)						; MODULO D
 	move.l turricanBitmapBuffer, $50(a5)	; Source A
 	move.l #-1,$44(a5)						; Mask A
-	move.l screenBuffer, $54(a5)			; Destination D
-	move.w #(200*5*64)+(320/16),$58(a5)		; BLTSIZE + GO !!
+	move.l screenBuffer, d0
+	add.l #50*44*5, d0
+	move.l d0, $54(a5)			; Destination D
+	move.w #(180*5*64)+(320/16),$58(a5)		; BLTSIZE + GO !!
 
 	;move.l screenBuffer, a0
 	;move.l #(44*5)-1,d0
@@ -405,27 +405,24 @@ coppercolors:
 	DC.W $01BC,$0F00
 	DC.W $01BE,$0800
 
-	DC.W $1B0F,$FFFE,$180,$00F
-	DC.W $360F,$FFFE,$180,$055
-	DC.W $370F,$FFFE,$180,$377
-	DC.W $380F,$FFFE,$180,$588
-	DC.W $390F,$FFFE,$180,$799
-	DC.W $3A0F,$FFFE,$180,$9AA
-	DC.W $3B0F,$FFFE,$180,$BBB
-	DC.W $3C0F,$FFFE,$180,$420
-	DC.W $3D0F,$FFFE,$180,$530
-	DC.W $3E0F,$FFFE,$180,$640
-	DC.W $3F0F,$FFFE,$180,$750
-	DC.W $400F,$FFFE,$180,$860
-	DC.W $410F,$FFFE,$180,$970
-	DC.W $420F,$FFFE,$180,$A80
-	DC.W $430F,$FFFE,$180,$B90
+	DC.W $1B0F,$FFFE,$180,$055
+	DC.W $1C0F,$FFFE,$180,$377
+	DC.W $1D0F,$FFFE,$180,$588
+	DC.W $1E0F,$FFFE,$180,$799
+	DC.W $1F0F,$FFFE,$180,$9AA
+	DC.W $200F,$FFFE,$180,$BBB
+	DC.W $210F,$FFFE,$180,$9AA
+	DC.W $220F,$FFFE,$180,$799
+	DC.W $230F,$FFFE,$180,$588
+	DC.W $240F,$FFFE,$180,$377
+	DC.W $250F,$FFFE,$180,$055
+	DC.W $260F,$FFFE,$180,$000
 	dc.l	-2
 	dc.w 0 ; just here for .L copy
 endcopperlist:
 
 modname:
-	dc.b "mod.demo", 0
+	dc.b "demo.mod", 0
 	even
 modsize:
 	dc.l 0
@@ -433,8 +430,7 @@ modBuffer:
 	dc.l 0
 	
 turricanName:
-;	dc.b "Image.IFF",0
-	dc.b "Turrican2.IFF",0
+	dc.b "demo_picture.IFF",0
 	even
 turricanIFFSize:
 	dc.l 0
