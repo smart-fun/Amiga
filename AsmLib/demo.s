@@ -7,6 +7,8 @@
 r:	
 	movem.l d0-d7/a0-a6,-(a7)
 	
+	bsr DOS_InitLibrary
+	
 	CREATE_OUTPUT_TEXT "Hello AMIGA",a0
 	bsr writeCLI
 
@@ -26,7 +28,7 @@ r:
 	
 	; get File Size
 	lea modname,a0
-	bsr file_size
+	bsr DOS_GetFileSize
 	move.l d0, modsize
 	bne .modsize_ok
 	
@@ -51,7 +53,7 @@ r:
 	move.l modsize, d0
 	lea modname,a0
 	move.l modBuffer, a1
-	bsr read_file
+	bsr DOS_LoadFile
 	
 skip_mod_file:
 	
@@ -147,7 +149,10 @@ main:
 	move.l systemCopper, $32(a1)
 	move.l EXEC_BASE, a6
 	jsr EXEC_CloseLib(a6)
-exit_permit:	
+exit_permit:
+
+	bsr DOS_ReleaseLibrary
+
 	move.l EXEC_BASE, a6
 	jsr EXEC_Permit(a6)
 exit_memory_release:
@@ -158,7 +163,7 @@ exit_movem:
 
 loadTurrican:
 	lea turricanName, a0
-	bsr file_size
+	bsr DOS_GetFileSize
 	move.l d0, turricanIFFSize
 	bne .turriSizeOk
 	rts
@@ -174,7 +179,7 @@ loadTurrican:
 	lea turricanName,a0
 	move.l turricanIFFBuffer,a1
 	move.l turricanIFFSize,d0
-	bsr read_file
+	bsr DOS_LoadFile
 	
 	move.l turricanIFFBuffer,a0
 	bsr IFF_GetSize
@@ -350,7 +355,7 @@ outputHandle:
 	
 	include "allocmem.i"
 	include "protracker.i"
-	include "file.i"
+	include "dos.i"
 	include "iff_ilbm.i"
 	
 gfxname:
