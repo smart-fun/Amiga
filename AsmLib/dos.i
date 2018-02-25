@@ -9,7 +9,7 @@ DOS_InitLibrary:
 	bsr openDosLibrary
 	movem.l (a7)+, d0-d7/a0-a6
 	rts
-	
+
 ; ******** DOS_ReleaseLibrary ********
 ; Releases the Dos Library
 ; INPUT: none
@@ -50,6 +50,16 @@ DOS_LoadFile:
 	movem.l (a7)+,d0-d7/a0-a6
 	rts
 
+; ******** DOS_WriteTextToCLI ********
+; Writes some text to CLI (if launched from CLI)
+; INPUT: a0 = text to print
+; OUTPUT: none
+DOS_WriteTextToCLI:
+	movem.l d0-d7/a0-a6, -(a7)
+	bsr writeCLI
+	movem.l (a7)+,d0-d7/a0-a6
+	rts
+
 ; *************************************************************************************************
 openDosLibrary:
 	move.l EXEC_BASE, a6
@@ -63,7 +73,7 @@ openDosLibrary:
 closeDosLibrary:
 	move.l dos_dosbase, d0
 	beq .dosNotOpened
-	move.l dos_dosbase, a1
+	move.l d0, a1
 	move.l EXEC_BASE, a6
 	jsr EXEC_CloseLib(a6)
 .dosNotOpened:
@@ -137,3 +147,53 @@ dos_file:
 	dc.l 0
 dos_filesize:
 	dc.l 0
+
+; *************************************************************************************************
+writeCLI:
+	move.l a0, .writeCLItext
+	move.l dos_dosbase, a6
+	jsr -60(a6)	; get output
+	move.l d0, d1				; file handler
+	bne .writeCLIhandler
+	rts
+.writeCLIhandler:
+	move.l .writeCLItext, d2	; text
+	moveq.l #-1, d3				; compute size
+	move.l d2, a0
+.writeCLIsize:
+	addq.l #1,d3
+	tst.b (a0)+
+	bne .writeCLIsize
+	jsr -48(a6)	; write
+	rts
+
+.writeCLItext:
+	dc.l 0
+
+	
+DOS_AddressToText:	; d0 = address -> a0=text
+	lea textAddress, a0
+	moveq.l #8-1, d1
+	moveq.l #0, d2
+textloop:
+	rol.l #4, d0
+	move.b d0, d2
+	and #$0F, d2
+	cmp #9, d2
+	bls .number
+	add #'A'-10,d2
+	bra .letter
+.number:
+	add #'0',d2
+.letter
+	move.b d2,(a0)+
+	dbf d1, textloop
+	lea returnedText,a0
+	rts
+	
+returnedText:
+	dc.b "$"
+textAddress:
+	dc.b "12345678",10,13,0
+	even
+	

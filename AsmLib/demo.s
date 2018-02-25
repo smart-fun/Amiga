@@ -6,25 +6,20 @@
 
 r:	
 	movem.l d0-d7/a0-a6,-(a7)
-	
-	bsr DOS_InitLibrary
-	
-	CREATE_OUTPUT_TEXT "Hello AMIGA",a0
-	bsr writeCLI
 
-; Alloc Chip memory for Screen
+	bsr DOS_InitLibrary
+
 	move.l #20, d0
 	bsr memory_init
 	tst.l d0
 	beq exit_movem
+	
+; Alloc Chip memory for Screen
 	move.l #44*300*5, d0
 	move.l #EXEC_ALLOC_TYPE_CHIP, d1
 	bsr memory_alloc
 	move.l d0, screenBuffer
 	beq exit_memory_release
-	
-	CREATE_OUTPUT_TEXT "Memory Allocated for Frame Buffer",a0
-	bsr writeCLI
 	
 	; get File Size
 	lea modname,a0
@@ -33,7 +28,7 @@ r:
 	bne .modsize_ok
 	
 	CREATE_OUTPUT_TEXT "Cannot open mod.demo",a0
-	bsr writeCLI
+	bsr DOS_WriteTextToCLI
 	bra skip_mod_file
 	
 .modsize_ok:
@@ -45,10 +40,11 @@ r:
 	bne .mod_alloc_ok
 
 	CREATE_OUTPUT_TEXT "Cannot allocate Chip Memory for module",a0
-	bsr writeCLI
+	bsr DOS_WriteTextToCLI
 	bra skip_mod_file
 	
 .mod_alloc_ok
+
 	; Read File
 	move.l modsize, d0
 	lea modname,a0
@@ -71,6 +67,9 @@ setBitplans:
 	dbf d1, setBitplans
 	
 	bsr loadTurrican
+	move.l turricanIFFBuffer, a0
+	bsr memory_free
+	clr.l turricanIFFBuffer
 
 ; check if copperlist is loaded in chip ram
 	move.l #copperlist, d0
@@ -83,7 +82,7 @@ setBitplans:
 
 .copper_in_fast:
 	CREATE_OUTPUT_TEXT "Copperlist in Fast Memory, allocate Chip...",a0
-	bsr writeCLI
+	bsr DOS_WriteTextToCLI
 ; alloc Chip memory for copperlist, and copy copperlist in it
 	move.l #endcopperlist-copperlist, d0
 	move.l #EXEC_ALLOC_TYPE_CHIP, d1
@@ -92,7 +91,7 @@ setBitplans:
 	bne .copper_allocation_ok
 	
 	CREATE_OUTPUT_TEXT "Cannot allocate Chip Memory for copperlist",a0
-	bsr writeCLI
+	bsr DOS_WriteTextToCLI
 	bra exit_memory_release
 	
 .copper_allocation_ok
@@ -151,13 +150,13 @@ main:
 	jsr EXEC_CloseLib(a6)
 exit_permit:
 
-	bsr DOS_ReleaseLibrary
-
 	move.l EXEC_BASE, a6
 	jsr EXEC_Permit(a6)
 exit_memory_release:
 	bsr memory_release_all
 exit_movem:
+	bsr DOS_ReleaseLibrary
+
 	movem.l (a7)+,d0-d7/a0-a6
 	rts
 
@@ -185,6 +184,7 @@ loadTurrican:
 	bsr IFF_GetSize
 	move.w d0, turricanWidth
 	bne .yesTurricanIFF
+	rts
 	
 .yesTurricanIFF:
 	move.w d1, turricanHeight
@@ -199,21 +199,14 @@ loadTurrican:
 	bsr memory_alloc
 	move.l d0, turricanBitmapBuffer
 	bne .yesTurriAlloc2
-	
-	move.l turricanIFFBuffer, a0
-	bsr memory_free
 	rts
 
 .yesTurriAlloc2:
-
 	move.l turricanIFFBuffer,a0
 	move.l turricanBitmapBuffer,a1
 	bsr IFF_GetPicture
 	tst.l d0
 	beq .yesTuriPicture
-
-	move.l turricanIFFBuffer, a0
-	bsr memory_free
 	rts
 
 .yesTuriPicture:	
@@ -221,9 +214,6 @@ loadTurrican:
 	bsr IFF_GetPalette
 	move.l d0, turricanPalette
 	bne .yesPalette
-	
-	move.l turricanIFFBuffer, a0
-	bsr memory_free
 	rts
 	
 .yesPalette:
@@ -285,9 +275,6 @@ doPalette:
 	;move.l (a0)+,(a1)+
 	;addq.l #4,a1
 	;dbf d1, .loopY
-	
-	move.l turricanIFFBuffer, a0
-	bsr memory_free
 	rts
 
 moveTube:
@@ -308,39 +295,6 @@ moveTube:
 	cmp.l d1,a0
 	blo .tubeLoop
 	rts
-	
-; TODO: move in dos.i
-writeCLI:
-	move.l a0, .writeCLItext
-	lea dosname, a1
-	moveq #0, d0
-	move.l EXEC_BASE, a6	; exec library
-	jsr EXEC_OpenLib(a6)
-	move.l d0, dosbase
-	beq .writeCLIexit
-	move.l d0, a6	; dos library
-	jsr -60(a6)	; get output
-	move.l d0,outputHandle
-	beq .writeCLIcloseDos
-	
-	move.l d0, d1	; file handler
-	move.l .writeCLItext, d2	; text
-	moveq.l #-1, d3	; compute size
-	move.l d2, a0
-.writeCLIsize:
-	addq.l #1,d3
-	tst.b (a0)+
-	bne .writeCLIsize
-	jsr -48(a6)	; write
-	
-.writeCLIcloseDos:
-	move.l EXEC_BASE, a6	; exec library
-	move.l dosbase,a1
-	jsr EXEC_CloseLib(a6)
-.writeCLIexit:
-	rts
-.writeCLItext:
-	dc.l 0
 	
 text:
 	dc.b "Hello World",10,13,0
