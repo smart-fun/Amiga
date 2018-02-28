@@ -7,49 +7,46 @@
 r:	
 	movem.l d0-d7/a0-a6,-(a7)
 
-	bsr DOS_InitLibrary
-
 	move.l #20, d0
-	bsr memory_init
-	tst.l d0
-	beq exit_movem
-	
+	bsr System_InitLibrary
+	bne _exit_demo
+
 ; Alloc Chip memory for Screen
 	move.l #44*300*5, d0
 	move.l #EXEC_ALLOC_TYPE_CHIP, d1
 	bsr memory_alloc
 	move.l d0, screenBuffer
-	beq exit_memory_release
+	beq _exit_demo
 	
 	; get File Size
 	lea modname,a0
-	bsr DOS_GetFileSize
+	bsr File_GetSize
 	move.l d0, modsize
-	bne .modsize_ok
+	bne _modsize_ok
 	
 	CREATE_OUTPUT_TEXT "Cannot open mod.demo",a0
-	bsr DOS_WriteTextToCLI
+	bsr CLI_WriteText
 	bra skip_mod_file
 	
-.modsize_ok:
+_modsize_ok:
 	; Alloc for File
 	move.l modsize, d0
 	move.l #EXEC_ALLOC_TYPE_CHIP, d1
 	bsr memory_alloc
 	move.l d0, modBuffer
-	bne .mod_alloc_ok
+	bne _mod_alloc_ok
 
 	CREATE_OUTPUT_TEXT "Cannot allocate Chip Memory for module",a0
-	bsr DOS_WriteTextToCLI
+	bsr CLI_WriteText
 	bra skip_mod_file
 	
-.mod_alloc_ok
+_mod_alloc_ok
 
 	; Read File
 	move.l modsize, d0
 	lea modname,a0
 	move.l modBuffer, a1
-	bsr DOS_LoadFile
+	bsr File_Load
 	
 skip_mod_file:
 	
@@ -57,14 +54,14 @@ skip_mod_file:
 	move.l screenBuffer, d0
 	lea copperbitplans, a1
 	moveq #5-1, d1
-setBitplans:
+_setBitplans:
 	swap d0
 	move.w d0,2(a1)
 	swap d0
 	move.w d0, 6(a1)
 	add.l #8, a1
 	add.l #44, d0
-	dbf d1, setBitplans
+	dbf d1, _setBitplans
 	
 	bsr loadTurrican
 	move.l turricanIFFBuffer, a0
@@ -75,35 +72,35 @@ setBitplans:
 	move.l #copperlist, d0
 	move.l d0, copperListAddress
 	cmp.l #$20000, d0
-	bhs .copper_in_fast
+	bhs _copper_in_fast
 	
 	CREATE_OUTPUT_TEXT "Copperlist in Chip Memory, OK",a0
-	bra .copperInChip
+	bra _copperInChip
 
-.copper_in_fast:
+_copper_in_fast:
 	CREATE_OUTPUT_TEXT "Copperlist in Fast Memory, allocate Chip...",a0
-	bsr DOS_WriteTextToCLI
+	bsr CLI_WriteText
 ; alloc Chip memory for copperlist, and copy copperlist in it
 	move.l #endcopperlist-copperlist, d0
 	move.l #EXEC_ALLOC_TYPE_CHIP, d1
 	bsr memory_alloc
 	move.l d0, copperListAddress
-	bne .copper_allocation_ok
+	bne _copper_allocation_ok
 	
 	CREATE_OUTPUT_TEXT "Cannot allocate Chip Memory for copperlist",a0
-	bsr DOS_WriteTextToCLI
-	bra exit_memory_release
+	bsr CLI_WriteText
+	bra _exit_demo
 	
-.copper_allocation_ok
+_copper_allocation_ok
 	move.l #endcopperlist-copperlist, d0
 	lsr.l #2, d0	; /4 because copy longs
 	lea copperlist, a0
 	move.l copperListAddress, a1
-.copyCopper:
+_copyCopper:
 	move.l (a0)+,(a1)+
-	dbf d0,.copyCopper
+	dbf d0,_copyCopper
 	
-.copperInChip
+_copperInChip
 ; Init Copper list
 	move.l EXEC_BASE, a6
 	jsr EXEC_Forbid(a6)
@@ -123,25 +120,25 @@ setBitplans:
 ; init protracker
 	move.l modBuffer, a0
 	tst.l (a0)
-	beq .noMusicInit
+	beq _noMusicInit
 	bsr protracker_init
-.noMusicInit:
+_noMusicInit:
 
 main:
 	WAIT_VBL 200
 	bsr moveTube
 	
 	tst.l modBuffer
-	beq .noMusicPlay
+	beq _noMusicPlay
 	bsr protracker_play
-.noMusicPlay:
+_noMusicPlay:
 	btst	#6,$bfe001
 	bne.b	main
 	
 	tst.l modBuffer
-	beq .noMusicRelease
+	beq _noMusicRelease
 	bsr protracker_release
-.noMusicRelease:
+_noMusicRelease:
 
 ; restore copperlist
 	move.l gfxbase,a1
@@ -152,17 +149,15 @@ exit_permit:
 
 	move.l EXEC_BASE, a6
 	jsr EXEC_Permit(a6)
-exit_memory_release:
-	bsr memory_release_all
-exit_movem:
-	bsr DOS_ReleaseLibrary
+_exit_demo:
+	bsr System_ReleaseLibrary
 
 	movem.l (a7)+,d0-d7/a0-a6
 	rts
 
 loadTurrican:
 	lea turricanName, a0
-	bsr DOS_GetFileSize
+	bsr File_GetSize
 	move.l d0, turricanIFFSize
 	bne .turriSizeOk
 	rts
@@ -178,7 +173,7 @@ loadTurrican:
 	lea turricanName,a0
 	move.l turricanIFFBuffer,a1
 	move.l turricanIFFSize,d0
-	bsr DOS_LoadFile
+	bsr File_Load
 	
 	move.l turricanIFFBuffer,a0
 	bsr IFF_GetSize
@@ -307,10 +302,9 @@ dosbase:
 outputHandle:
 	dc.l 0
 	
-	include "allocmem.i"
-	include "protracker.i"
-	include "dos.i"
+	include "system.i"
 	include "iff_ilbm.i"
+	include "protracker.i"
 	
 gfxname:
 	dc.b "graphics.library",0
