@@ -87,3 +87,22 @@ Control is done with the Keyboard. The music is done with Future Composer 1.3 so
 - Load the data binaries: "y"
 - Run the demo: "jr"
 
+## RotoZoom effect
+
+![Rotozoom Screenshot](Rotozoom.png "Rotozoom Screenshot")
+
+### Description
+
+Test for Rotation + Zoom of a tiger picture (not sure if AGA or not)
+
+### Launch
+
+- In folder "Rotozoom" launch Asmone
+- Choose memory allocation (for example Chip 200K)
+- Load the code: "r", then "Roto16.s"
+- Assemble the code: "a" (no option)
+- Run the example: "jr"
+- Left mouse button to quit
+
+
+
